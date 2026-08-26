@@ -12,17 +12,13 @@ body{margin:0;display:grid;place-items:center;min-height:100vh;font:14px Arial,s
 <body><main><div class="spin"></div><strong>Caricamento PECWatch…</strong><p>Demo pubblica anonimizzata.</p></main>
 <script>
 (async()=>{
- const repo='Centro-Studi-Societari-S-r-l/Procedure-Concorsuali---Open-Banking';
- const shas=['1d2176e23ab200c49df7ba1ce8651e48de98f834','e5698fbe87a5a63c204ec30e4fd6f5e4cfffc2d4','bcce988e36bf6531e5e9a1f3320c0dbf0410e713','0f39bf3e4fbf772e450b93d800d411562a060cb8','274fe8b2285130432a0a778eea4a4ad3820cdc91','d67c734360bb89f90a1beb571779bf55f5e881e9','7f51afac7799acf89e28b2d9c3e592196aff9de9','695437b1292b31d6720457af0329baa6c657c714','ec4e8add60ed37ff40a86d05211c40811abd2e8a','49936ded9e3d98d9c7ec2c6517926d194c4c5e90','77a9cc249528dfa9ccde23a448d12a769ea9df06','6978533dbf824e96b60ee20511558524ba4fd211'];
  try{
-  const parts=[];
-  for(const sha of shas){
-   const r=await fetch(`https://api.github.com/repos/${repo}/git/blobs/${sha}`,{cache:'force-cache'});
-   if(!r.ok)throw new Error(`GitHub ${r.status}`);
-   const j=await r.json(),b=atob(j.content.replace(/\s/g,'')),u=new Uint8Array(b.length);
-   for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
-   parts.push(u);
-  }
+  const names=Array.from({length:12},(_,i)=>`blobs/chunk${String(i+1).padStart(2,'0')}.txt`);
+  const parts=await Promise.all(names.map(async n=>{
+   const r=await fetch(n,{cache:'force-cache'});
+   if(!r.ok)throw new Error(`${n}: ${r.status}`);
+   return new Uint8Array(await r.arrayBuffer());
+  }));
   const total=parts.reduce((n,p)=>n+p.length,0),all=new Uint8Array(total);let o=0;
   for(const p of parts){all.set(p,o);o+=p.length}
   const html=new TextDecoder('utf-8').decode(all);
